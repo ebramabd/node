@@ -3,9 +3,22 @@ import {db} from "../datastore";
 import {ExpressHandler, Post} from "../types";
 import crypto from "crypto";
 
-export const listPostHandler:ExpressHandler<{},{}> = async (request, response)=>{
-   // throw new Error('Not implemented');
-    response.send({posts: await db.listPosts()});
+export interface PostResponse {
+    posts: Post[];
+}
+
+export const listPostHandler:ExpressHandler<
+    {},PostResponse
+> = async (request, response)=>{
+    console.log(request.headers.authorization)
+    const posts = await db.listPosts();
+
+    if (!posts) (
+        response.status(500).send(
+            {error: 'Something went wrong'})
+    )
+
+    response.send({posts: posts});
 }
 
 type createPostRequest = Pick<Post, 'title' | 'url' | 'userId'>;
@@ -16,7 +29,7 @@ export const createPostHandler: ExpressHandler<
 > = async (req, res) => {
 
     if (!req.body.title) {
-        return res.status(400).send('Missing title');
+        return res.status(400).send({error: 'Missing title'});
     }
 
     if (!req.body.url || !req.body.userId) {
